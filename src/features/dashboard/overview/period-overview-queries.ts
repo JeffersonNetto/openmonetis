@@ -114,12 +114,14 @@ export async function fetchDashboardPeriodOverview(
 		.select({
 			period: transactions.period,
 			transactionType: transactions.transactionType,
-			totalAmount: sql<number>`coalesce(sum(case when ${transactions.note} ilike ${refundPattern} then 0 else ${transactions.amount} end), 0)`.as(
-				"total",
-			),
-			refundAmount: sql<number>`coalesce(sum(case when ${transactions.note} ilike ${refundPattern} then ${transactions.amount} else 0 end), 0)`.as(
-				"refund",
-			),
+			totalAmount:
+				sql<number>`coalesce(sum(case when ${transactions.note} ilike ${refundPattern} then 0 else ${transactions.amount} end), 0)`.as(
+					"total",
+				),
+			refundAmount:
+				sql<number>`coalesce(sum(case when ${transactions.note} ilike ${refundPattern} then ${transactions.amount} else 0 end), 0)`.as(
+					"refund",
+				),
 			accountExcludeFromBalance: financialAccounts.excludeFromBalance,
 		})
 		.from(transactions)

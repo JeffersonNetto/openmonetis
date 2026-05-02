@@ -45,7 +45,8 @@ export const requiredDecimalSchema = (fieldName: string = "valor") =>
 				.transform((value) => value.replace(",", ".")),
 		])
 		.transform((value, ctx) => {
-			const parsed = typeof value === "number" ? value : Number.parseFloat(value);
+			const parsed =
+				typeof value === "number" ? value : Number.parseFloat(value);
 			if (Number.isNaN(parsed)) {
 				ctx.addIssue({
 					code: z.ZodIssueCode.custom,

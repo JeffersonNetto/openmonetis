@@ -14,7 +14,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
-import { getCurrentPeriod, formatPeriodForUrl } from "@/shared/utils/period";
+import { formatPeriodForUrl, getCurrentPeriod } from "@/shared/utils/period";
 import { cn } from "@/shared/utils/ui";
 
 type BillListItemProps = {
