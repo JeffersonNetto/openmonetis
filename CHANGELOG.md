@@ -5,6 +5,29 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [2.5.3] - 2026-05-05
+
+Esta versão foca em polimento do diálogo de detalhes do lançamento, refresh visual da linha do tempo de parcelas e limpeza terminológica em torno de contas/cartões inativos. O diálogo de detalhes ganhou logo da conta/cartão, ícone colorido por categoria e avatar do responsável; a barra de progresso de parcelas foi redesenhada num layout horizontal compacto; e o widget "Minhas Contas" do dashboard passou a ocultar automaticamente contas marcadas como inativas. Internamente, o termo "arquivadas" foi padronizado como "inativas" nas tabs de contas e cartões, surgiram constantes compartilhadas para formas de pagamento liquidáveis e um helper `isAccountInactive`, e o seed de mock data ganhou cobertura mais realista (novas pessoas, contas, cartões e assinaturas recorrentes).
+
+### Adicionado
+- Logo da conta/cartão, ícone colorido por categoria e avatar do responsável no diálogo de detalhes do lançamento.
+- Constantes `SETTLEABLE_PAYMENT_METHODS` e `CREDIT_CARD_PAYMENT_METHOD` em `features/transactions/constants.ts`.
+- Helper `isAccountInactive(status)` em `shared/lib/accounts/constants.ts`, reaproveitado em `account-card.tsx` e `my-accounts-widget.tsx`.
+
+### Alterado
+- Widget "Minhas Contas" do dashboard agora oculta contas inativas (filtra antes de aplicar a regra de "não consideradas") e ajusta o empty state quando o usuário só tem contas inativas.
+- Linha do tempo de parcelas (`InstallmentTimeline`) redesenhada: layout horizontal com barra de progresso, datas de compra e quitação alinhadas nas pontas e contador "N restante(s)" / "Última parcela" abaixo.
+- Diálogo de detalhes do lançamento: badge de status "Pendente" virou "Em aberto" com variante `info`, "Resumo" virou "Total" e ID do lançamento passou a exibir o UUID completo em fonte monoespaçada (sem truncar).
+- Tabs em contas e cartões: "Arquivadas/Arquivados" renomeadas para "Inativas/Inativos".
+- Legenda do calendário envolvida em `Card` para destacar visualmente do conteúdo da página.
+- Páginas `cards`, `categories`, `inbox`, `notes`, `payers` perderam `items-start` no `<main>` (alinhamento natural à largura total); `calendar` ajustou gap de 3 para 4.
+- Tabela de lançamentos: extraído IIFE de payment-method dos botões de liquidação com as novas constantes compartilhadas; bloco logo+label da coluna Conta/Cartão deduplicado via reuso de variável JSX; removido `capitalize` redundante do label "Venc.".
+- Mock data renovado em `scripts/mock-data.ts`: novas pessoas (Mario), novas contas (Itaú Personnalité, Banco Inter), novo cartão Inter Black, e cobertura mais ampla de assinaturas recorrentes (Vivo, Sabesp, Disney+, HBO Max, Amazon Prime, OpenAI, Apple iCloud, Notion, YouTube Premium).
+
+### Removido
+- Comentário narrativo `{/* Opções de Antecipação */}` em `transactions-columns.tsx`.
+- Helper local `shortTransactionId` em `transaction-details-dialog.tsx` (substituído pela exibição do UUID completo).
+
 ## [2.5.2] - 2026-05-04
 
 Esta versão traz melhorias visuais e de usabilidade em contas, lançamentos, orçamentos, cartões e anotações: novos tipos de conta, ícones no seletor, feedback visual de limite excedido nas progress bars e refinamentos nos ícones de tarefas em anotações.
