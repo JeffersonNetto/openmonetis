@@ -1,7 +1,9 @@
+import type { SupportedAIProvider } from "@/shared/lib/ai/types";
+
 /**
  * Tipos de providers disponíveis
  */
-export type AIProvider = "openai" | "anthropic" | "google" | "openrouter";
+export type AIProvider = SupportedAIProvider;
 
 /**
  * Metadados dos providers
@@ -26,6 +28,16 @@ export const PROVIDERS = {
 		id: "openrouter" as const,
 		name: "OpenRouter",
 		icon: "RiRouterLine",
+	},
+	ollama: {
+		id: "ollama" as const,
+		name: "Ollama",
+		icon: "RiServerLine",
+	},
+	"lm-studio": {
+		id: "lm-studio" as const,
+		name: "LM Studio",
+		icon: "RiCpuLine",
 	},
 } as const;
 
@@ -77,6 +89,82 @@ export const AVAILABLE_MODELS = [
 
 export const DEFAULT_MODEL = "gpt-5.5";
 export const DEFAULT_PROVIDER = "openai";
+
+export const OLLAMA_PREFIX = "ollama/";
+export const LM_STUDIO_PREFIX = "lm-studio/";
+const OPENROUTER_MODEL_REGEX = /^[a-zA-Z0-9_-]+\/[a-zA-Z0-9._-]+$/;
+
+const CUSTOM_PROVIDER_PREFIX: Partial<Record<AIProvider, string>> = {
+	ollama: OLLAMA_PREFIX,
+	"lm-studio": LM_STUDIO_PREFIX,
+};
+
+export function inferProviderFromModelId(modelId: string): AIProvider {
+	const selectedModel = AVAILABLE_MODELS.find((model) => model.id === modelId);
+	if (selectedModel) {
+		return selectedModel.provider;
+	}
+
+	if (modelId.startsWith(OLLAMA_PREFIX)) {
+		return "ollama";
+	}
+
+	if (modelId.startsWith(LM_STUDIO_PREFIX)) {
+		return "lm-studio";
+	}
+
+	if (OPENROUTER_MODEL_REGEX.test(modelId)) {
+		return "openrouter";
+	}
+
+	return DEFAULT_PROVIDER;
+}
+
+export function toCustomModelId(
+	provider: AIProvider,
+	modelName: string,
+): string {
+	const trimmedModelName = modelName.trim();
+	const prefix = CUSTOM_PROVIDER_PREFIX[provider];
+
+	if (!prefix) {
+		return trimmedModelName;
+	}
+
+	if (!trimmedModelName) {
+		return "";
+	}
+
+	if (trimmedModelName.startsWith(prefix)) {
+		return trimmedModelName;
+	}
+
+	return `${prefix}${trimmedModelName}`;
+}
+
+export function fromCustomModelId(
+	provider: AIProvider,
+	modelId: string,
+): string {
+	const prefix = CUSTOM_PROVIDER_PREFIX[provider];
+	if (!prefix) {
+		return modelId;
+	}
+
+	if (modelId.startsWith(prefix)) {
+		return modelId.slice(prefix.length);
+	}
+
+	return modelId;
+}
+
+export function isCustomModelProvider(provider: AIProvider): boolean {
+	return (
+		provider === "openrouter" ||
+		provider === "ollama" ||
+		provider === "lm-studio"
+	);
+}
 
 /**
  * System prompt para análise de insights

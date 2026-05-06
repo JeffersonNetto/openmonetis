@@ -101,6 +101,7 @@ const CATEGORY_ICON_OPTIONS: CategoryIconOption[] = [
 	{ label: "Teclado", value: "RiKeyboardLine" },
 	{ label: "Mouse", value: "RiMouseLine" },
 	{ label: "Fone Bluetooth", value: "RiBluetoothLine" },
+	{ label: "IA", value: "RiRobot2Line" },
 
 	// Pessoas
 	{ label: "Usuário", value: "RiUserLine" },
@@ -281,6 +282,7 @@ export const CATEGORY_ICON_GROUPS: CategoryIconGroup[] = [
 			{ label: "Teclado", value: "RiKeyboardLine" },
 			{ label: "Mouse", value: "RiMouseLine" },
 			{ label: "Fone Bluetooth", value: "RiBluetoothLine" },
+			{ label: "IA", value: "RiRobot2Line" },
 		],
 	},
 	{

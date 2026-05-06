@@ -40,6 +40,14 @@ const InsightItemSchema = z.object({
 });
 
 /**
+ * Schema tolerante para resposta bruta do LLM
+ */
+export const RawInsightItemSchema = z.union([
+	InsightItemSchema,
+	z.string().min(1),
+]);
+
+/**
  * Schema para categoria de insights
  */
 const InsightCategorySchema = z.object({
@@ -52,6 +60,16 @@ const InsightCategorySchema = z.object({
 	items: z.array(InsightItemSchema).min(1).max(6),
 });
 
+export const RawInsightCategorySchema = z.object({
+	category: z.enum([
+		"behaviors",
+		"triggers",
+		"recommendations",
+		"improvements",
+	]),
+	items: z.array(RawInsightItemSchema).min(1).max(6),
+});
+
 /**
  * Schema for complete insights response from AI
  */
@@ -61,7 +79,29 @@ export const InsightsResponseSchema = z.object({
 	categories: z.array(InsightCategorySchema).length(4),
 });
 
+export const RawInsightsResponseSchema = z.object({
+	month: z.string().regex(/^\d{4}-\d{2}$/),
+	generatedAt: z.string(),
+	categories: z.array(RawInsightCategorySchema).length(4),
+});
+
 /**
  * TypeScript types derived from schemas
  */
 export type InsightsResponse = z.infer<typeof InsightsResponseSchema>;
+
+export type RawInsightsResponse = z.infer<typeof RawInsightsResponseSchema>;
+
+export function normalizeInsightsResponse(
+	data: RawInsightsResponse,
+): InsightsResponse {
+	return {
+		...data,
+		categories: data.categories.map((category) => ({
+			...category,
+			items: category.items.map((item) =>
+				typeof item === "string" ? { text: item } : item,
+			),
+		})),
+	};
+}

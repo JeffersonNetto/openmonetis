@@ -71,7 +71,7 @@ A ideia é simples: ter um lugar onde consigo ver todas as minhas contas, cartõ
 
 💸 **Parcelamentos avançados** — Séries de parcelas, antecipação com cálculo de desconto, análise consolidada.
 
-🤖 **Insights com IA** — Análises geradas por Claude, GPT, Gemini ou OpenRouter. Insights personalizados e histórico salvo.
+🤖 **Insights com IA** — Análises geradas por Claude, GPT, Gemini, OpenRouter, Ollama ou LM Studio. Insights personalizados e histórico salvo.
 
 👥 **Gestão colaborativa** — Pagadores com permissões (admin/viewer), notificações automáticas por e-mail, códigos de compartilhamento.
 
@@ -95,7 +95,7 @@ A ideia é simples: ter um lugar onde consigo ver todas as minhas contas, cartõ
 - **shadcn/ui** (Radix UI) + **Tailwind CSS**
 - **Docker** (multi-stage build)
 - **Biome** (linting + formatting)
-- **Vercel AI SDK** (Claude, GPT, Gemini, OpenRouter)
+- **Vercel AI SDK** (Claude, GPT, Gemini, OpenRouter, Ollama, LM Studio)
 
 ---
 
@@ -466,12 +466,21 @@ ANTHROPIC_API_KEY=
 OPENAI_API_KEY=
 GOOGLE_GENERATIVE_AI_API_KEY=
 OPENROUTER_API_KEY=
+OLLAMA_BASE_URL=
+LM_STUDIO_BASE_URL=
 
 # Logo.dev (opcional, necessário para logos automáticos de estabelecimentos)
 # Ambas as variáveis são runtime — basta definir no host; nenhum build arg necessário.
 LOGO_DEV_TOKEN=
 LOGO_DEV_SECRET_KEY=
 ```
+
+Para usar providers locais nos Insights:
+
+- `OLLAMA_BASE_URL`: endpoint OpenAI-compatível do Ollama (ex.: `http://127.0.0.1:11434/v1`)
+- `LM_STUDIO_BASE_URL`: endpoint OpenAI-compatível do LM Studio (ex.: `http://127.0.0.1:1234/v1`)
+- No seletor de modelo, use `Ollama` ou `LM Studio` e informe o nome do modelo carregado localmente.
+- Se o endpoint estiver offline, a geração falha com mensagem clara, sem fallback automático.
 
 ---
 

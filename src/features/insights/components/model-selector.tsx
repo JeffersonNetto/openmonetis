@@ -7,7 +7,11 @@ import {
 	type AIProvider,
 	AVAILABLE_MODELS,
 	DEFAULT_PROVIDER,
+	fromCustomModelId,
+	inferProviderFromModelId,
+	isCustomModelProvider,
 	PROVIDERS,
+	toCustomModelId,
 } from "@/features/insights/constants";
 import { Card } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
@@ -45,6 +49,12 @@ const PROVIDER_ICON_PATHS: Record<
 		light: "/providers/openrouter_light.svg",
 		dark: "/providers/openrouter_dark.svg",
 	},
+	ollama: {
+		light: "/providers/ollama.svg",
+	},
+	"lm-studio": {
+		light: "/providers/lm-studio.svg",
+	},
 };
 
 export function ModelSelector({
@@ -60,12 +70,13 @@ export function ModelSelector({
 
 	// Sincronizar customModel quando value mudar (importante para pré-carregamento)
 	useEffect(() => {
-		// Se o value tem "/" é um modelo OpenRouter customizado
-		if (value.includes("/")) {
-			setCustomModel(value);
-			setSelectedProvider("openrouter");
+		const inferredProvider = inferProviderFromModelId(value);
+
+		if (isCustomModelProvider(inferredProvider) && value) {
+			setCustomModel(fromCustomModelId(inferredProvider, value));
+			setSelectedProvider(inferredProvider);
 		} else {
-			setCustomModel(value);
+			setCustomModel("");
 			// Limpar selectedProvider para deixar o useMemo detectar automaticamente
 			setSelectedProvider(null);
 		}
@@ -78,14 +89,7 @@ export function ModelSelector({
 			return selectedProvider;
 		}
 
-		// Se o modelo tem "/" é OpenRouter
-		if (value.includes("/")) {
-			return "openrouter";
-		}
-
-		// Caso contrário, tente detectar baseado no modelo
-		const model = AVAILABLE_MODELS.find((m) => m.id === value);
-		return model?.provider ?? DEFAULT_PROVIDER;
+		return inferProviderFromModelId(value) ?? DEFAULT_PROVIDER;
 	}, [value, selectedProvider]);
 
 	// Agrupar modelos por provider
@@ -98,6 +102,8 @@ export function ModelSelector({
 			anthropic: [],
 			google: [],
 			openrouter: [],
+			ollama: [],
+			"lm-studio": [],
 		};
 
 		AVAILABLE_MODELS.forEach((model) => {
@@ -111,9 +117,9 @@ export function ModelSelector({
 	const handleProviderChange = (newProvider: AIProvider) => {
 		setSelectedProvider(newProvider);
 
-		if (newProvider === "openrouter") {
-			// Para OpenRouter, usa o modelo customizado ou limpa o valor
-			onValueChange(customModel || "");
+		if (isCustomModelProvider(newProvider)) {
+			const nextModelId = toCustomModelId(newProvider, customModel);
+			onValueChange(nextModelId);
 			return;
 		}
 
@@ -126,7 +132,19 @@ export function ModelSelector({
 	// Atualizar modelo customizado do OpenRouter
 	const handleCustomModelChange = (modelName: string) => {
 		setCustomModel(modelName);
-		onValueChange(modelName);
+		onValueChange(toCustomModelId(currentProvider, modelName));
+	};
+
+	const providerHelpLink: Partial<Record<AIProvider, string>> = {
+		openrouter: "https://openrouter.ai/models",
+		ollama: "https://ollama.com/library",
+		"lm-studio": "https://lmstudio.ai/models",
+	};
+
+	const customPlaceholderByProvider: Partial<Record<AIProvider, string>> = {
+		openrouter: "Ex: anthropic/claude-sonnet-4",
+		ollama: "Ex: llama3.2:3b",
+		"lm-studio": "Ex: qwen2.5-7b-instruct",
 	};
 
 	return (
@@ -190,24 +208,26 @@ export function ModelSelector({
 				</RadioGroup>
 
 				{/* Seletor de Modelo */}
-				{currentProvider === "openrouter" ? (
+				{isCustomModelProvider(currentProvider) ? (
 					<div className="space-y-2">
 						<Input
 							value={customModel}
 							onChange={(e) => handleCustomModelChange(e.target.value)}
-							placeholder="Ex: anthropic/claude-3.5-sonnet"
+							placeholder={customPlaceholderByProvider[currentProvider]}
 							disabled={disabled}
 							className="border-none bg-neutral-200 dark:bg-neutral-800"
 						/>
-						<a
-							href="https://openrouter.ai/models"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-						>
-							<RiExternalLinkLine className="h-3 w-3" />
-							Ver modelos disponíveis no OpenRouter
-						</a>
+						{providerHelpLink[currentProvider] && (
+							<a
+								href={providerHelpLink[currentProvider]}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+							>
+								<RiExternalLinkLine className="h-3 w-3" />
+								Ver modelos disponíveis do provider
+							</a>
+						)}
 					</div>
 				) : (
 					<Select

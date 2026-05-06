@@ -151,9 +151,9 @@ export function InsightsPage({ period, onAnalyze }: InsightsPageProps) {
 				<AlertDescription className="text-sm text-card-foreground">
 					<strong>Aviso de privacidade:</strong> Ao gerar insights, seus dados
 					financeiros serão enviados para o provedor de IA selecionado
-					(Anthropic, OpenAI, Google ou OpenRouter) para processamento.
-					Certifique-se de que você confia no provedor escolhido antes de
-					prosseguir.
+					(Anthropic, OpenAI, Google, OpenRouter, Ollama ou LM Studio) para
+					processamento. Certifique-se de que você confia no provedor escolhido
+					antes de prosseguir.
 				</AlertDescription>
 			</Alert>
 

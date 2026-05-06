@@ -1,12 +1,11 @@
 "use server";
 
-import { anthropic } from "@ai-sdk/anthropic";
-import { google } from "@ai-sdk/google";
-import { openai } from "@ai-sdk/openai";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
+import { resolveLanguageModel } from "@/shared/lib/ai/providers";
 import { getUser } from "@/shared/lib/auth/server";
 import {
+	normalizeInsightsResponse,
+	RawInsightsResponseSchema,
 	type InsightsResponse,
 	InsightsResponseSchema,
 } from "@/shared/lib/schemas/insights";
@@ -15,6 +14,21 @@ import { aggregateMonthData } from "./aggregate";
 import type { ActionResult } from "./types";
 
 const PERIOD_REGEX = /^\d{4}-\d{2}$/;
+
+function extractJsonObjectFromText(text: string): unknown {
+	const fencedJsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/i);
+	if (fencedJsonMatch?.[1]) {
+		return JSON.parse(fencedJsonMatch[1]);
+	}
+
+	const firstBrace = text.indexOf("{");
+	const lastBrace = text.lastIndexOf("}");
+	if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+		throw new Error("JSON não encontrado na resposta do modelo.");
+	}
+
+	return JSON.parse(text.slice(firstBrace, lastBrace + 1));
+}
 
 export async function generateInsightsAction(
 	period: string,
@@ -30,53 +44,17 @@ export async function generateInsightsAction(
 			};
 		}
 
-		const selectedModel = AVAILABLE_MODELS.find((m) => m.id === modelId);
-		const isOpenRouterFormat = /^[a-zA-Z0-9_-]+\/[a-zA-Z0-9._-]+$/.test(
-			modelId,
-		);
-		if (!selectedModel && !isOpenRouterFormat) {
+		const resolvedModel = resolveLanguageModel(modelId, AVAILABLE_MODELS);
+		if (!resolvedModel.ok) {
 			return {
 				success: false,
-				error: "Modelo inválido.",
+				error: resolvedModel.error,
 			};
 		}
 
 		const aggregatedData = await aggregateMonthData(user.id, period);
 
-		let model: ReturnType<typeof google>;
-
-		if (isOpenRouterFormat && !selectedModel) {
-			const apiKey = process.env.OPENROUTER_API_KEY;
-			if (!apiKey) {
-				return {
-					success: false,
-					error:
-						"OPENROUTER_API_KEY não configurada. Adicione a chave no arquivo .env",
-				};
-			}
-
-			const openrouter = createOpenRouter({
-				apiKey,
-			});
-			model = openrouter.chat(modelId);
-		} else if (selectedModel?.provider === "openai") {
-			model = openai(modelId);
-		} else if (selectedModel?.provider === "anthropic") {
-			model = anthropic(modelId);
-		} else if (selectedModel?.provider === "google") {
-			model = google(modelId);
-		} else {
-			return {
-				success: false,
-				error: "Provider de modelo não suportado.",
-			};
-		}
-
-		const result = await generateObject({
-			model,
-			schema: InsightsResponseSchema,
-			system: INSIGHTS_SYSTEM_PROMPT,
-			prompt: `Analise os seguintes dados financeiros agregados do período ${period}.
+		const basePrompt = `Analise os seguintes dados financeiros agregados do período ${period}.
 
 Dados agregados:
 ${JSON.stringify(aggregatedData, null, 2)}
@@ -106,14 +84,44 @@ Organize suas observações nas 4 categories especificadas no prompt do sistema:
 
 Cada item deve ser conciso, direto e acionável. Use os novos dados para dar contexto temporal e identificar padrões mais profundos.
 
-Responda APENAS com um JSON válido seguindo exatamente o schema especificado.`,
-		});
+Responda APENAS com um JSON válido seguindo exatamente o schema especificado.`;
 
-		const validatedData = InsightsResponseSchema.parse(result.object);
+		let rawOutput: unknown;
+
+		try {
+			const result = await generateText({
+				model: resolvedModel.model,
+				output: Output.object({
+					schema: RawInsightsResponseSchema,
+				}),
+				system: INSIGHTS_SYSTEM_PROMPT,
+				prompt: basePrompt,
+			});
+
+			rawOutput = result.output;
+		} catch (structuredError) {
+			console.error(
+				"Structured output failed for insights generation, trying text fallback:",
+				structuredError,
+			);
+
+			const fallbackResult = await generateText({
+				model: resolvedModel.model,
+				system: INSIGHTS_SYSTEM_PROMPT,
+				prompt: `${basePrompt}\n\nSe necessário, não use markdown. Retorne somente JSON bruto.`,
+			});
+
+			rawOutput = extractJsonObjectFromText(fallbackResult.text);
+		}
+
+		const parsedRawOutput = RawInsightsResponseSchema.parse(rawOutput);
+		const normalizedOutput = InsightsResponseSchema.parse(
+			normalizeInsightsResponse(parsedRawOutput),
+		);
 
 		return {
 			success: true,
-			data: validatedData,
+			data: normalizedOutput,
 		};
 	} catch (error) {
 		console.error("Error generating insights:", error);
