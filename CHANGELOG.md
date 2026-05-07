@@ -5,6 +5,24 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [2.5.5] - 2026-05-06
+
+Esta versão melhora a navegação por históricos e lançamentos. O changelog ganhou uma linha do tempo mais leve, colapsável e fácil de escanear; os filtros de lançamentos passam a aceitar múltiplas pessoas, categorias, formas de pagamento, condições e contas/cartões na mesma busca; e os diálogos adotam as animações compartilhadas do design system. Também há pequenos polimentos de texto e layout para deixar a interface mais consistente.
+
+### Adicionado
+- Lançamentos: filtros multi-seleção para condição, forma de pagamento, pessoa, categoria e conta/cartão, permitindo combinar vários valores no mesmo filtro (query string passa a aceitar múltiplos valores por chave).
+- Changelog: parser passou a inferir o tipo de bump (major/minor/patch) a partir da numeração e a extrair o parágrafo de resumo abaixo do cabeçalho de versão; novo arquivo `src/features/settings/lib/changelog-types.ts` consolidando os tipos compartilhados.
+- UI: dependência `tw-animate-css` para usar as mesmas animações utilitárias já presentes nos componentes shadcn/ui.
+
+### Alterado
+- Changelog: visual da página reformulado para linha do tempo com resumo sempre visível, detalhes colapsáveis por versão, agrupamento por mês e marcadores visuais por tipo de bump; componente migrado para `"use client"` com `Collapsible` e abertura via âncora (`#vX-Y-Z`).
+- Lançamentos: botões "Nova Receita" e "Nova Despesa" agora usam os próprios triggers do `TransactionDialog` (via prop `createSlot`), reduzindo estado manual na página e eliminando o fluxo `setCreateOpen` + `transactionTypeForCreate`.
+- Diálogos: animações customizadas em CSS (`@keyframes dialog-in/out` e `overlay-in/out`) substituídas pelas classes utilitárias compartilhadas em `Dialog`/`DialogOverlay` (`data-[state=open]:animate-in`, `zoom-in-95`, `fade-in-0`).
+- BulkActionDialog: label do escopo "Todas as pessoas" passa a indicar a parcela atual (`Todas as pessoas desta parcela (N/Total)`) com descrição mais clara sobre o efeito da ação.
+- Checkbox: `RiCheckLine`/`RiSubtractLine` agora herdam `text-current` para alinhar com a cor do indicator nativo.
+- Landing page: remoção de fundos alternados (`bg-muted/40`) nas seções "Funcionalidades", "Stack" e "Para quem é" para uma leitura visual mais limpa.
+- Navbar: aviso de atualização passa a usar o texto "Versão X disponível".
+
 ## [2.5.4] - 2026-05-06
 
 Esta versão é uma faxina arquitetural de larga escala sem nenhuma mudança visível ao usuário. Removido código morto, padronizamos identificadores em inglês conforme a convenção do projeto, simplificamos o barrel de Server Actions e consolidamos os arquivos de helpers/queries soltos nas raízes das features dentro de pastas `lib/`. O resultado é uma estrutura previsível e consistente entre features (`actions.ts`, `queries.ts`, `actions/`, `components/`, `hooks/`, `lib/`) e um saldo líquido de −428 linhas de código com zero impacto em comportamento, performance ou banco de dados.
@@ -220,6 +238,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [2.4.1] - 2026-04-16
 
+Versão pequena com refresh visual nas telas de autenticação (efeito blob com três círculos coloridos em movimento e card com glassmorphism), capitalização dos labels da navbar para melhor legibilidade e otimização do banco com 17 índices novos em foreign keys — evitando sequential scans em deletes em tabelas grandes como `lancamentos`. Corrigida regressão no `postgres:18-alpine` que recusava iniciar em instalações existentes; adicionada variável `PGDATA` no compose para preservar dados de quem já tinha o volume populado.
+
 ### Adicionado
 
 - UI/Auth: layout animado nas páginas de login e signup com efeito blob (3 círculos coloridos em movimento) e card com glassmorphism; layout compartilhado extraído para `app/(auth)/layout.tsx` eliminando duplicação (PR #42)
@@ -240,6 +260,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [2.4.0] - 2026-04-13
 
+Esta versão integra o serviço Logo.dev para exibir automaticamente logos de marcas na coluna de estabelecimentos dos lançamentos, com picker manual para fixar o domínio quando a sugestão automática não acerta. As consultas vão por novas rotas de API (`/api/logo/search` e `/api/logo/mapping`) que servem como proxy seguro — a secret key fica server-side. Inclui também tabela própria `establishment_logos` com PK composta `(user_id, name_key)` para persistir as preferências por usuário.
+
 ### Adicionado
 
 - Estabelecimentos: integração com Logo.dev — logos automáticos de marcas exibidos na coluna de estabelecimentos nos lançamentos
@@ -259,6 +281,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [2.3.8] - 2026-04-12
 
+Refatoração do `docker-compose.yml` para virar standalone — agora basta um `curl` + `docker compose up -d`, sem dependências de arquivos externos ou profiles complexos. README reescrito em dois perfis claros (Usar com Docker e Desenvolver com hot-reload) e scripts npm reduzidos de 10 para 5.
+
 ### Alterado
 
 - Docker: `docker-compose.yml` refatorado — removidos profiles, build e dependência de arquivo externo; compose agora é standalone (basta `curl` + `docker compose up -d`)
@@ -267,6 +291,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 - Docs: README reestruturado em dois perfis claros — **Usar** (só Docker) e **Desenvolver** (hot-reload)
 
 ## [2.3.7] - 2026-04-11
+
+Esta versão amplia significativamente o dashboard com três novos widgets configuráveis (Anexos, Inbox, Tendências de Categoria), adiciona filtros úteis na tabela de lançamentos (por status de pagamento e por presença de anexo) e moderniza a tipografia substituindo a fonte local por Inter (Google Fonts, self-hosted pelo Next.js) — eliminando arquivos `.woff2` do repositório. Pesos tipográficos foram padronizados para `font-semibold` em títulos, rótulos e valores monetários, e o card de grupo de parcelas foi redesenhado expandindo num dialog de detalhes com parcelas pagas/pendentes separadas. No backend, a CSP foi expandida para permitir preview de anexos PDF via S3, e o setup ganhou script `install-deps.sh` pra preparar servidores Ubuntu 24.04 limpos.
 
 ### Adicionado
 
@@ -304,11 +330,15 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [2.3.6] - 2026-04-09
 
+Correção pontual no Docker — adicionado `NODE_PATH=/app/migrate/node_modules` no entrypoint para o `drizzle-kit` resolver corretamente o `drizzle-orm` ao executar as migrations no container.
+
 ### Corrigido
 
 - Docker: adicionado `NODE_PATH=/app/migrate/node_modules` no entrypoint para que o `drizzle-kit` consiga resolver `drizzle-orm` ao executar as migrations no container
 
 ## [2.3.5] - 2026-04-07
+
+Correção crítica na CSP: regra movida do `next.config.ts` (build time) para `proxy.ts` (runtime), desbloqueando uploads de anexos quando o `S3_ENDPOINT` ainda não estava disponível durante o build da imagem Docker.
 
 ### Corrigido
 
@@ -316,11 +346,15 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [2.3.4] - 2026-04-05
 
+Correção pontual no upload de anexos — a CSP `connect-src` bloqueava o fetch para o storage, gerando `NetworkError` na hora de subir o arquivo.
+
 ### Corrigido
 
 - Anexos: corrigido upload que falhava com `NetworkError` — CSP `connect-src` bloqueava fetch para o Storage
 
 ## [2.3.3] - 2026-04-05
+
+Correção do fluxo de tokens da API: `/api/auth/device/verify` voltou a aceitar tokens criados pela tela de Settings (revertido de JWT para hash lookup). O prefixo dos tokens também foi renomeado de `os_` para `opm_` (OpenMonetis) e rotas JWT não utilizadas foram removidas — usuários precisam recriar os tokens existentes.
 
 ### Corrigido
 
@@ -333,6 +367,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 - Tokens: `api-token.ts` simplificado para conter apenas `hashToken` e `extractBearerToken`
 
 ## [2.3.2] - 2026-04-04
+
+Esta versão concentra hardening de segurança. Tokens da API ganharam expiração obrigatória de 1 ano (sem mais tokens eternos) e o refresh foi corrigido para validar JWT por assinatura. A CSP foi expandida com `default-src`, `script-src`, `style-src`, `img-src`, `font-src` e `connect-src` (no lugar de uma regra única ampla), e foi adicionada mitigação para CVE-2024-44294 desabilitando parsing de fórmulas em `xlsx`. Inclui ainda novos headers (`Referrer-Policy`, `X-Permitted-Cross-Domain-Policies`), respostas `401 JSON` em vez de redirect 302 em rotas autenticadas, `security.txt` (RFC 9116) e correção de URL com protocolo duplicado no sitemap.
 
 ### Segurança
 
@@ -349,11 +385,15 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [2.3.1] - 2026-04-03
 
+Correção pontual de infraestrutura — dependências do `drizzle-kit` passaram a ser instaladas em `/app/migrate/` separadamente do `node_modules` do build standalone, corrigindo o erro `Cannot find module 'next'` no startup do container.
+
 ### Corrigido
 
 - Infraestrutura: deps do drizzle-kit agora são instaladas em `/app/migrate/` separado do `node_modules` do standalone, corrigindo erro `Cannot find module 'next'` no startup do container
 
 ## [2.3.0] - 2026-04-03
+
+Esta versão introduz `@tanstack/react-query` no projeto, padronizando cache, deduplicação e invalidação de leituras client-side. Várias features (anexos, insights, antecipação de parcelas) passaram a usar React Query no lugar de `useEffect` manual sobre rotas GET dedicadas. O dashboard ganhou ajuda contextual em cada métrica e configuração persistida pra ocultar contas marcadas como não consideradas no saldo total; o menu do usuário na navbar passou a avisar quando há release nova publicada no GitHub; e o Docker passou a rodar migrations automaticamente no startup via `docker-entrypoint.sh`. Internamente, o `knip` foi adicionado pra auditar arquivos/exports/tipos sem uso, várias rotas e actions ganharam validações extras (filtros por `userId` em joins, rate limits explícitos no Better Auth, headers `Cache-Control: private, no-store` em rotas privadas) e o projeto foi atualizado para Next.js 16.2.2 e Biome 2.4.10.
 
 ### Adicionado
 
@@ -390,11 +430,15 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [2.2.1] - 2026-04-01
 
+Correção pontual no build da imagem Docker — removido `chown -R /app` do stage final (que travava o build/push da GitHub Action por lentidão excessiva); permissões agora definidas via `COPY --chown` direto.
+
 ### Corrigido
 
 - Docker: imagem de produção deixa de executar `chown -R /app` no stage final; as permissões passam a ser definidas nos `COPY --chown`, reduzindo o risco de travamento e lentidão excessiva no build/push da GitHub Action
 
 ## [2.2.0] - 2026-04-01
+
+Esta versão entrega uma nova página dedicada de galeria de anexos em `/attachments` com miniaturas, visualização inline (incluindo PDF via `pdfjs-dist`), download direto e acesso a partir do lançamento. As páginas de login e cadastro foram redesenhadas com sidebar mockup de faturas, três blocos de funcionalidade e gradiente decorativo. O dashboard passou a notificar boletos e faturas com vencimento dentro de 5 dias, e o cache do dashboard migrou de `unstable_cache` para a diretiva `use cache` (com `cacheTag` e `cacheLife`), com `cacheComponents: true` no `next.config.ts` e `connection()` em todas as páginas para forçar render dinâmico. A tipografia ganhou peso 500 (Medium) padronizado em títulos, valores e rótulos.
 
 ### Adicionado
 
@@ -416,6 +460,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [2.1.2] - 2026-03-30
 
+Pequena versão de polimento: novo escopo `"period"` na ação em lote de lançamentos (aplica alteração a todos os lançamentos do período sem sobrescrever o pagador individual de cada um), preferência de tamanho máximo por arquivo de anexo (5/10/25/50/100 MB) persistida no banco e respeitada em todos os pontos de upload, e redesign visual da página de Configurações com separadores entre seções e títulos maiores.
+
 ### Adicionado
 
 - Preferências: nova configuração de tamanho máximo por arquivo de anexo (5, 10, 25, 50 ou 100 MB), persistida no banco e respeitada em todos os pontos de upload
@@ -431,6 +477,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 - Configurações: seção "Extrato e lançamentos" renomeada para "Lançamentos"
 
 ## [2.1.1] - 2026-03-29
+
+Esta versão extrai a navbar pra um componente `NavbarShell` compartilhado entre app e landing page e cria uma variante `navbar` no Button pra centralizar os estilos antes duplicados em `nav-styles.ts`. A integração com `@vercel/analytics`/`@vercel/speed-insights` foi substituída por Umami self-hosted via script tag no layout raiz.
 
 ### Adicionado
 
@@ -453,6 +501,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [2.1.0] - 2026-03-28
 
+Esta versão adiciona suporte a anexos em transações, com upload direto para storage compatível com S3, persistência em tabelas dedicadas (`anexos` e `lancamento_anexos`) e ações de visualizar/remover no detalhe do lançamento. O upload exige token assinado por arquivo, valida ownership da transação na leitura/remoção e confere tamanho/tipo do objeto no storage antes de persistir o vínculo no banco. Inclui também novo workflow `release.yml` que cria tag e GitHub Release automaticamente a partir da versão do `package.json` e da entrada correspondente no `CHANGELOG.md`.
+
 ### Adicionado
 
 - Lançamentos: suporte a anexos em transações com upload direto para storage compatível com S3, persistência em tabelas dedicadas (`anexos` e `lancamento_anexos`) e ações de visualizar/remover no detalhe do lançamento
@@ -468,11 +518,15 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [2.0.3] - 2026-03-26
 
+Correção pontual em `/transactions` — removida dependência de `crypto.randomUUID()` no carregamento inicial, que falhava em ambientes self-hosted sem HTTPS (a API só está disponível em contextos seguros).
+
 ### Corrigido
 
 - Lançamentos: `/transactions` deixa de depender de `crypto.randomUUID()` no carregamento inicial, corrigindo a falha em ambientes self-hosted sem HTTPS ao abrir a página
 
 ## [2.0.2] - 2026-03-25
+
+Versão focada nas notificações da navbar: novo estado persistido permite marcar alertas de fatura, boleto e orçamento como lidos ou arquivados por usuário; o snapshot global passa a usar o período corrente do negócio (não mais o `periodo` da URL), itens lidos saem do badge e arquivados somem da lista padrão do sino. O filtro foi refinado para um seletor explícito entre `Ativas` e `Arquivadas`. Inclui ajustes pontuais no detalhamento por categoria do dashboard (oculta categorias sem movimentação no período), na arte decorativa do cabeçalho de boas-vindas e na edição em lote de lançamentos em série (que agora propaga também o status de pagamento para transações fora do cartão).
 
 ### Adicionado
 
@@ -502,6 +556,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [2.0.1] - 2026-03-21
 
+Versão de correções na inbox de pré-lançamentos: filtro por app passa a montar a lista completa a partir de todos os itens do status atual (sem depender da página carregada), notificações de cartões/apps sem logo cadastrado passam a usar `default_icon.png` como fallback, e o select de apps exibe os logos. Inclui também correção de divergência entre a versão exibida no UI e a reportada pelo `/api/health` (que agora reporta a versão atual do `package.json`).
+
 ### Corrigido
 
 - Inbox: filtro por app em `/inbox` agora monta a lista completa de apps da aba a partir de todos os itens do status atual, sem depender apenas da página carregada, e o SSR deixa de quebrar quando `sourceApps` vier inconsistente
@@ -511,6 +567,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 - Versionamento: `/api/health` passa a reportar a versão atual do `package.json`, evitando divergência entre healthcheck, UI e release publicada
 
 ## [2.0.0] - 2026-03-21
+
+Marco importante do projeto. Esta versão consolida ganhos de performance, segurança e organização interna. No backend, paginação server-side real foi implementada em transações, extrato e inbox; o dashboard reduziu de 19 fetchers para 7 blocos com agregações compartilhadas; exportações de PDF/Excel passaram a carregar libs sob demanda apenas no clique; e o cache de dashboard/insights ganhou invalidação segmentada por `userId` (sem fallback global). Internamente, identificadores foram migrados de PT-BR para inglês (`lancamento` → `transaction`, `pagador` → `payer`, `conta` → `account`, etc.) e helpers foram consolidados em módulos de domínio. Visualmente, a navbar e os cards de auth ganharam dot pattern + brilho em primary, faturas tiveram refinamento na hierarquia visual, e a tipografia foi unificada na família America. Inclui ainda script `scripts/backup.sh` para backup automático do PostgreSQL, importação de extratos OFX e XLS/XLSX com tela de revisão e dedup por FITID, e nova opção de zerar dados financeiros sem excluir o usuário.
 
 ### Adicionado
 
@@ -568,6 +626,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [1.7.7] - 2026-03-05
 
+Versão de organização interna sem mudanças visíveis grandes. Períodos e navegação mensal passaram a usar os helpers centrais de período (`YYYY-MM`), hooks locais (calculadora, month-picker, logo picker) foram movidos pra perto das respectivas features e `components/navbar`/`sidebar` foram consolidados em `components/navigation/*`. Análise de parcelas migrou para `/relatorios/analise-parcelas`, exportações em PDF/CSV/Excel ganharam melhor branding e apresentação, e a calculadora teve ajustes de estabilidade no arrasto.
+
 ### Alterado
 
 - Períodos e navegação mensal: `useMonthPeriod` passou a usar os helpers centrais de período (`YYYY-MM`), o month-picker foi simplificado e o rótulo visual agora segue o formato `Março 2026`.
@@ -581,6 +641,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 - Também houve ajustes menores de responsividade, espaçamento e acabamento visual em telas mobile, modais e detalhes de interface.
 
 ## [1.7.6] - 2026-03-02
+
+Esta versão adiciona suporte completo a Passkeys (WebAuthn) via `@better-auth/passkey`: nova aba em `/ajustes` permite listar, adicionar, renomear e remover credenciais, e a tela de login ganhou ação dedicada para passkey. O dashboard ganhou widget de Anotações e atalhos rápidos na toolbar de widgets pra criar Receita, Despesa ou Anotação direto. Top Estabelecimentos foi unificado num único widget com abas, e o widget "Lançamentos recentes" foi substituído por "Progresso de metas" com lista de orçamentos do período (gasto, limite e percentual de uso por categoria).
 
 ### Adicionado
 
@@ -616,6 +678,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [1.7.5] - 2026-02-28
 
+Versão pequena de polimento: ações para excluir item individual (processado/descartado) e limpar itens em lote por status na inbox de pré-lançamentos, redesign dos cards e diálogos dos widgets de boletos e faturas com indicação "Atrasado / Pagar" quando vencidos e não pagos, e migração da página de categorias de cards pra layout em tabela com link direto para detalhe e ações inline.
+
 ### Adicionado
 
 - Inbox de pré-lançamentos: ações para excluir item individual (processado/descartado) e limpar itens em lote por status
@@ -634,6 +698,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [1.7.4] - 2026-02-28
 
+Versão de polimento de responsividade no mobile: 26 componentes ajustados (navbar, filtros, skeletons, widgets, dialogs), card de análise de parcelas empilhado verticalmente em telas pequenas e cards do top estabelecimentos reorganizados em coluna única no mobile. Inclui também regra mais inteligente em "Remover selecionados" — quando todos os itens pertencem à mesma série, abre dialog de escopo com 3 opções; e ajuste no consumo de limite por despesa recorrente no cartão (só consome quando a data já passou).
+
 ### Alterado
 
 - Card de análise de parcelas (`/dashboard/analise-parcelas`): layout empilhado no mobile — nome/cartão e valores Total/Pendente em linhas separadas ao invés de lado-a-lado, evitando truncamento
@@ -645,6 +711,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [1.7.3] - 2026-02-27
 
+Versão pequena com nova prop `compact` no DatePicker (formato abreviado "28 fev", sem "de" e sem ano) e modal de múltiplos lançamentos reformulado: selects de conta e cartão separados por forma de pagamento, InlinePeriodPicker ao escolher cartão de crédito e DatePicker compacto.
+
 ### Adicionado
 
 - Prop `compact` no DatePicker para formato abreviado "28 fev" (sem "de" e sem ano)
@@ -655,6 +723,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 - Opção "Boleto" removida das formas de pagamento no modal de múltiplos lançamentos
 
 ## [1.7.2] - 2026-02-26
+
+Versão de polimento dos diálogos: padding maior (p-10), largura padronizada em `max-w-xl` e botões do footer com largura igual; o lançamento dialog ganhou seção colapsável "Condições e anotações" e cálculo automático do período da fatura via `deriveCreditCardPeriod()`. Inclui também uma faxina de tipos (non-null assertions removidas, `any` substituído por tipos explícitos em 15+ arquivos) e remoção de 6 componentes e 20+ funções/tipos sem uso.
 
 ### Alterado
 
@@ -679,6 +749,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [1.7.1] - 2026-02-24
 
+Esta versão substitui o header lateral por uma topbar de navegação com backdrop blur e links agrupados em 5 seções (Dashboard, Lançamentos, Cartões, Relatórios, Ferramentas), expande o sino de notificações pra exibir orçamentos estourados e pré-lançamentos pendentes em seções separadas, e cria página dedicada de changelog em `/changelog` (acessível pelo menu do usuário com a versão atual exibida ao lado).
+
 ### Adicionado
 
 - Topbar de navegação substituindo o header fixo: backdrop blur, links agrupados em 5 seções (Dashboard, Lançamentos, Cartões, Relatórios, Ferramentas)
@@ -702,6 +774,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [1.6.3] - 2026-02-19
 
+Correção pontual: variável `RESEND_FROM_EMAIL` não era lida corretamente do `.env` quando o valor continha espaços (precisa estar entre aspas). Leitura centralizada em `lib/email/resend.ts` com `getResendFromEmail()` e carregamento explícito do `.env` no contexto de Server Actions.
+
 ### Corrigido
 
 - E-mail Resend: variável `RESEND_FROM_EMAIL` não era lida do `.env` (valores com espaço precisam estar entre aspas). Leitura centralizada em `lib/email/resend.ts` com `getResendFromEmail()` e carregamento explícito do `.env` no contexto de Server Actions
@@ -713,11 +787,15 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [1.6.2] - 2026-02-19
 
+Correção pontual no mobile: ao selecionar um logo no diálogo de criação de conta/cartão, o diálogo principal fechava inesperadamente. Adicionado `stopPropagation` nos eventos de click/touch dos botões e delay com `requestAnimationFrame` antes de fechar o seletor.
+
 ### Corrigido
 
 - Bug no mobile onde, ao selecionar um logo no diálogo de criação de conta/cartão, o diálogo principal fechava inesperadamente: adicionado `stopPropagation` nos eventos de click/touch dos botões de logo e delay com `requestAnimationFrame` antes de fechar o seletor de logo
 
 ## [1.6.1] - 2026-02-18
+
+Versão pequena: nome do estabelecimento padronizado para transferências entre contas ("Saída - Transf. entre contas" e "Entrada - Transf. entre contas") com anotação no formato "de {origem} -> {destino}", e correção de avisos `width(-1) and height(-1)` do `ChartContainer` no console.
 
 ### Alterado
 
@@ -725,6 +803,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 - ChartContainer (Recharts): renderização do gráfico apenas após montagem no cliente e uso de `minWidth`/`minHeight` no ResponsiveContainer para evitar aviso "width(-1) and height(-1)" no console
 
 ## [1.6.0] - 2026-02-18
+
+Versão de personalização da tabela de lançamentos. Duas novas preferências em Ajustes > Extrato e lançamentos: "Anotações em coluna" (controla se a anotação aparece como coluna ou tooltip no ícone) e "Ordem das colunas" (lista ordenável por arrasto pra reordenar Estabelecimento, Transação, Valor etc.). Inclui ajustes mobile no header do dashboard (fixo só no mobile) e na rolagem horizontal de tabs e botões de ação.
 
 ### Adicionado
 
@@ -746,6 +826,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [1.5.3] - 2026-02-21
 
+Versão focada no painel do pagador (novo card "Status de Pagamento" com totais pagos/pendentes e listagem individual de boletos com data de vencimento, data de pagamento e status), além de SEO completo na landing page (Open Graph, Twitter Card, JSON-LD Schema.org, sitemap.xml e robots.txt) e layout específico com metadados ricos. Imagens da landing convertidas de PNG para WebP para melhor performance.
+
 ### Adicionado
 
 - Painel do pagador: card "Status de Pagamento" com totais pagos/pendentes e listagem individual de boletos com data de vencimento, data de pagamento e status
@@ -766,6 +848,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 - Template de título dinâmico no layout raiz (`%s | OpenMonetis`)
 
 ## [1.5.2] - 2026-02-16
+
+Reforma visual da landing page: hero com gradient sutil e tipografia responsiva, dashboard preview sem bordas pra visual mais limpo, seção "Funcionalidades" reorganizada em 6 cards principais + 6 extras compactos, seção "Como usar" com tabs Docker (Recomendado) vs Manual e footer simplificado em 3 colunas. Inclui menu hamburger mobile com Sheet drawer, animações fade-in via Intersection Observer e seção dedicada ao OpenMonetis Companion com screenshots e fluxo de captura.
 
 ### Alterado
 
@@ -789,6 +873,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [1.5.1] - 2026-02-16
 
+Esta versão renomeia o projeto de **OpenSheets** para **OpenMonetis** em todo o codebase (~40 arquivos: package.json, manifests, layouts, componentes, server actions, emails, Docker, docs e landing page). URLs do repositório atualizados de `opensheets-app` para `openmonetis`, image Docker renomeada para `felipegcoutinho/openmonetis` e logo textual atualizado. Inclui também suporte a multi-domínio via `PUBLIC_DOMAIN` (domínio público serve apenas a landing page, com middleware bloqueando rotas do app).
+
 ### Alterado
 
 - Projeto renomeado de **OpenSheets** para **OpenMonetis** em todo o codebase (~40 arquivos): package.json, manifests, layouts, componentes, server actions, emails, Docker, docs e landing page
@@ -802,6 +888,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 - Variável de ambiente `PUBLIC_DOMAIN` no `.env.example` com documentação
 
 ## [1.5.0] - 2026-02-15
+
+Versão de personalização tipográfica: 13 fontes disponíveis (incluindo SF Pro Display, SF Pro Rounded, Inter, Geist Sans, Roboto, Reddit Sans, JetBrains Mono e outras) configuráveis por usuário tanto pra interface quanto pros valores monetários, com FontProvider que aplica a troca instantaneamente via CSS variables sem necessidade de reload. Fontes Apple SF Pro carregadas localmente com 4 pesos (Regular, Medium, Semibold, Bold) e novas colunas `system_font` e `money_font` na tabela `preferencias_usuario`.
 
 ### Adicionado
 
@@ -821,6 +909,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 - MoneyValues usa `var(--font-money)` em vez de classe fixa, permitindo customização
 
 ## [1.4.1] - 2026-02-15
+
+Versão focada na inbox de pré-lançamentos: novas abas "Pendentes", "Processados" e "Descartados" (antes só pendentes), logo do cartão/conta exibido automaticamente nos cards via matching por nome do app, pre-fill automático do cartão de crédito ao processar e badges de status com data nos itens já processados/descartados em modo readonly. Cor `--warning` ajustada para melhor contraste (mais alaranjada).
 
 ### Adicionado
 
@@ -842,6 +932,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 - Subtítulo da página de pré-lançamentos atualizado
 
 ## [1.4.0] - 2026-02-07
+
+Reforma do design system: ~60+ componentes migrados de cores hardcoded do Tailwind (`green-500`, `red-600`, `amber-500`, `blue-500` etc.) pra tokens semânticos (`success`, `destructive`, `warning`, `info`); adicionados novos tokens `--success`, `--warning`, `--info` (com foregrounds) tanto em light quanto dark mode, novas variantes `success` e `info` no Badge, e cores de chart estendidas de 6 para 10. Inclui também correção do bug de invalidação de cache do dashboard que impedia widgets de boleto/fatura de atualizar após pagamento, e fix de scroll em listas Popover+Command (estabelecimento, categorias, filtros) com a prop `modal`.
 
 ### Corrigido
 
@@ -873,6 +965,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [1.3.1] - 2026-02-06
 
+Versão pequena: calculadora arrastável via drag handle no header do dialog, callback `onSelectValue` pra inserir valor diretamente no campo de lançamento, e nova aba "Changelog" em Ajustes com histórico parseado do `CHANGELOG.md`. As páginas de itens ativos e arquivados em Cartões, Contas e Anotações foram unificadas com sistema de tabs (mesmo padrão de Categorias), eliminando rotas separadas e nomenclatura inconsistente.
+
 ### Adicionado
 
 - Calculadora arrastável via drag handle no header do dialog
@@ -887,6 +981,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 - Padronizada nomenclatura para "Arquivados"/"Arquivadas" em todas as entidades
 
 ## [1.3.0] - 2026-02-06
+
+Versão de performance no dashboard: indexes compostos em `lancamentos`, cache cross-request via `unstable_cache` com tag `"dashboard"` e TTL de 120s, e invalidação automática em mutations financeiras via `revalidateTag`. Eliminados ~20 JOINs com a tabela `pagadores` (substituídos por filtro direto via `pagadorId`) e queries consolidadas (income-expense-balance: 12→1 com GROUP BY; payment-status: 2→1; expenses/income por categoria: 4→2). Auth session deduplicada por request via `React.cache()` e scan de métricas limitado a 24 meses.
 
 ### Adicionado
 
@@ -907,6 +1003,8 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 - `CLAUDE.md` otimizado de ~1339 linhas para ~140 linhas
 
 ## [1.2.6] - 2025-02-04
+
+Versão de adaptação ao React 19 compiler: removidos ~60 `useCallback`/`useMemo` desnecessários, wrappers `React.memo` redundantes e simplificação de padrões de hidratação com `useSyncExternalStore`. Sem mudanças visíveis ao usuário — só faxina interna alinhada às novas otimizações automáticas do compilador.
 
 ### Alterado
 
@@ -936,12 +1034,16 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [1.2.5] - 2025-02-01
 
+Versão pequena: novo widget de pagadores no dashboard com avatares atualizados.
+
 ### Adicionado
 
 - Widget de pagadores no dashboard
 - Avatares atualizados para pagadores
 
 ## [1.2.4] - 2025-01-22
+
+Correção pontual: preservação de formatação nas anotações e ajuste no layout do card de anotações.
 
 ### Corrigido
 
@@ -950,12 +1052,16 @@ Esta versão é quase toda sobre organização e polimento. O código interno do
 
 ## [1.2.3] - 2025-01-22
 
+Versão pequena: versão do app passa a aparecer na sidebar e atualização da documentação.
+
 ### Adicionado
 
 - Versão exibida na sidebar
 - Documentação atualizada
 
 ## [1.2.2] - 2025-01-22
+
+Versão de manutenção: atualização de dependências e formatação aplicada em todo o código.
 
 ### Alterado
 

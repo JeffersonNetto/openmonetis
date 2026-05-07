@@ -76,11 +76,11 @@ const capitalize = (value: string) =>
 
 const EMPTY_FILTERS: TransactionSearchFilters = {
 	transactionFilter: null,
-	conditionFilter: null,
-	paymentFilter: null,
-	payerFilter: null,
-	categoryFilter: null,
-	accountCardFilter: null,
+	conditionFilters: [],
+	paymentFilters: [],
+	payerFilters: [],
+	categoryFilters: [],
+	accountCardFilters: [],
 	searchFilter: null,
 	settledFilter: null,
 	attachmentFilter: null,

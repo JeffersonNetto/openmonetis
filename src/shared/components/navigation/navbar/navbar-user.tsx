@@ -190,7 +190,7 @@ export function NavbarUser({
 							>
 								<RiMegaphoneLine className="size-4 text-success shrink-0" />
 								<span className="flex-1 tracking-wide text-xs font-bold">
-									Atualização {updateCheck.latestVersion} disponível
+									Versão {updateCheck.latestVersion} disponível
 								</span>
 							</Link>
 						)}

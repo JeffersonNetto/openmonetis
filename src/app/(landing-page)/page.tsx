@@ -208,7 +208,7 @@ export default async function Page() {
 			</section>
 
 			{/* Features Section */}
-			<section id="funcionalidades" className="py-12 md:py-24 bg-muted/40">
+			<section id="funcionalidades" className="py-12 md:py-24">
 				<div className="max-w-8xl mx-auto px-4">
 					<div className="mx-auto max-w-6xl">
 						<AnimateOnScroll>
@@ -447,7 +447,7 @@ export default async function Page() {
 			</section>
 
 			{/* Tech Stack Section */}
-			<section id="stack" className="py-12 md:py-24 bg-muted/40">
+			<section id="stack" className="py-12 md:py-24">
 				<div className="max-w-8xl mx-auto px-4">
 					<div className="mx-auto max-w-6xl">
 						<AnimateOnScroll>
@@ -535,7 +535,7 @@ export default async function Page() {
 			</section>
 
 			{/* Who is this for Section */}
-			<section id="para-quem-e" className="py-12 md:py-24 bg-muted/40">
+			<section id="para-quem-e" className="py-12 md:py-24">
 				<div className="max-w-8xl mx-auto px-4">
 					<div className="mx-auto max-w-4xl">
 						<AnimateOnScroll>
